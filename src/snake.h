@@ -6,7 +6,7 @@
 
 class Snake {
 public:
-    enum class Direction { kUp, kDown, kLeft, kRight };
+    enum class Direction { kRight, kDown, kLeft, kUp };
 
     Snake(int grid_width, int grid_height)
         : grid_width(grid_width)
@@ -14,6 +14,8 @@ public:
         , head_x(grid_width / 2)
         , head_y(grid_height / 2)
     {
+        body.emplace_back(SDL_Point{static_cast<int>(head_x), static_cast<int>(head_y) + 1});
+        body.emplace_back(SDL_Point{static_cast<int>(head_x), static_cast<int>(head_y) + 2});
     }
 
     void Update();

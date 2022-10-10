@@ -8,7 +8,7 @@
 void Controller::ChangeDirection(
     Snake& snake, Snake::Direction input, Snake::Direction opposite) const
 {
-    if (snake.direction != opposite || snake.size == 1)
+    if (snake.direction != opposite)
         snake.direction = input;
     return;
 }
@@ -20,6 +20,9 @@ void Controller::HandleInput(bool& running, Snake& snake) const
         if (e.type == SDL_QUIT) {
             running = false;
         } else if (e.type == SDL_KEYDOWN) {
+            if (!snake.alive) {
+                break;
+            }
             switch (e.key.keysym.sym) {
             case SDLK_UP:
                 ChangeDirection(
