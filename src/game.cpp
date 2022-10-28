@@ -1,4 +1,6 @@
 #include <iostream>
+#include <fstream>
+#include <sstream>
 
 #include "game.h"
 
@@ -9,6 +11,7 @@ Game::Game(std::size_t grid_width, std::size_t grid_height)
     , random_h(0, static_cast<int>(grid_height - 1))
 {
     PlaceFood();
+    Walls("default");
 }
 
 void Game::Run(Controller const& controller, Renderer& renderer,
@@ -27,7 +30,7 @@ void Game::Run(Controller const& controller, Renderer& renderer,
         // Input, Update, Render - the main game loop.
         controller.HandleInput(running, snake);
         Update();
-        renderer.Render(snake, food);
+        renderer.Render(snake, food, walls);
 
         frame_end = SDL_GetTicks();
 
@@ -59,10 +62,38 @@ void Game::PlaceFood()
         int y = random_h(engine);
         // Check that the location is not occupied by a snake item before
         // placing food.
-        if (!snake.SnakeCell(x, y)) {
+        if (!snake.SnakeCell(x, y) && !WallCell(x, y)) {
             food.x = x;
             food.y = y;
             return;
+        }
+    }
+}
+
+bool Game::WallCell(int x, int y)
+{
+    if (std::any_of(walls.cbegin(), walls.cend(), [x, y](const SDL_Point& point) {
+            return x == point.x && y == point.y;
+        })) {
+        return true;
+    }
+    return false;
+}
+
+void Game::Walls(const std::string& path)
+{
+    std::ifstream myfile(kWallsDirectory + path);
+
+    if (myfile) {
+        std::string line;
+        while (getline(myfile, line)) {
+            std::istringstream sline(line);
+            int x;
+            int y;
+            char c;
+            while (sline >> x >> c >> y && c == ',') {
+                walls.emplace_back(SDL_Point{x, y});
+            }
         }
     }
 }
@@ -76,6 +107,10 @@ void Game::Update()
 
     int new_x = static_cast<int>(snake.head_x);
     int new_y = static_cast<int>(snake.head_y);
+
+    if (WallCell(new_x, new_y)) {
+        snake.alive = false;
+    }
 
     // Check if there's food over here
     if (food.x == new_x && food.y == new_y) {

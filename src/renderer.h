@@ -11,7 +11,8 @@ public:
         const std::size_t grid_width, const std::size_t grid_height);
     ~Renderer();
 
-    void Render(Snake const& snake, SDL_Point const& food);
+    void Render(Snake const& snake, SDL_Point const& food,
+        std::vector<SDL_Point> walls);
     void UpdateWindowTitle(int score, int fps);
 
 private:
@@ -32,8 +33,8 @@ private:
     static const auto Straight = 5;
     static const auto Head = 6;
 
-    bool equalCell(SDL_Point const& cell1, SDL_Point const& cell2);
-    bool foodIsNext(Snake const& snake, SDL_Point const& food);
+    bool EqualCell(SDL_Point const& cell1, SDL_Point const& cell2);
+    bool NextToFood(Snake const& snake, SDL_Point const& food);
     int tailDirection(SDL_Point const& tail, SDL_Point const& lastBodyCell);
     int turnDirection(SDL_Point const& currentCell,
         SDL_Point const& previousCell, SDL_Point const& nextCell);

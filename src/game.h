@@ -2,6 +2,8 @@
 #define GAME_H
 
 #include <random>
+#include <vector>
+#include <string>
 
 #include "SDL.h"
 #include "controller.h"
@@ -19,16 +21,20 @@ public:
 private:
     Snake snake;
     SDL_Point food;
+    std::vector<SDL_Point> walls;
 
     std::random_device dev;
     std::mt19937 engine;
     std::uniform_int_distribution<int> random_w;
     std::uniform_int_distribution<int> random_h;
+    const std::string kWallsDirectory{"../walls/"};
 
     int score { 0 };
 
     void PlaceFood();
     void Update();
+    void Walls(const std::string& path);
+    bool WallCell(int x, int y);
 };
 
 #endif

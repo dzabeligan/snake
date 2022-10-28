@@ -41,7 +41,7 @@ Renderer::~Renderer()
     SDL_Quit();
 }
 
-bool Renderer::equalCell(SDL_Point const& cell1, SDL_Point const& cell2)
+bool Renderer::EqualCell(SDL_Point const& cell1, SDL_Point const& cell2)
 {
     return ((cell1.x + grid_width) % grid_width
                == (cell2.x + grid_width) % grid_width)
@@ -49,20 +49,20 @@ bool Renderer::equalCell(SDL_Point const& cell1, SDL_Point const& cell2)
             == (cell2.y + grid_height) % grid_height);
 }
 
-bool Renderer::foodIsNext(Snake const& snake, SDL_Point const& food)
+bool Renderer::NextToFood(Snake const& snake, SDL_Point const& food)
 {
     int head_x = static_cast<int>(snake.head_x);
     int head_y = static_cast<int>(snake.head_y);
 
     switch (snake.direction) {
     case Snake::Direction::kRight:
-        return equalCell(SDL_Point { head_x + 1, head_y }, food);
+        return EqualCell(SDL_Point { head_x + 1, head_y }, food);
     case Snake::Direction::kLeft:
-        return equalCell(SDL_Point { head_x - 1, head_y }, food);
+        return EqualCell(SDL_Point { head_x - 1, head_y }, food);
     case Snake::Direction::kDown:
-        return equalCell(SDL_Point { head_x, head_y + 1 }, food);
+        return EqualCell(SDL_Point { head_x, head_y + 1 }, food);
     case Snake::Direction::kUp:
-        return equalCell(SDL_Point { head_x, head_y - 1 }, food);
+        return EqualCell(SDL_Point { head_x, head_y - 1 }, food);
     default:
         return false;
     }
@@ -80,7 +80,7 @@ int Renderer::tailDirection(
 
     auto result = std::find_if(
         std::begin(ds), std::end(ds), [&tail, &lastBodyCell, this](auto d) {
-            return this->equalCell(
+            return this->EqualCell(
                 SDL_Point { tail.x + d[0], tail.y + d[1] }, lastBodyCell);
         });
 
@@ -94,39 +94,35 @@ int Renderer::turnDirection(SDL_Point const& currentCell,
     SDL_Point const& previousCell, SDL_Point const& nextCell)
 {
     bool up = false;
-    if (equalCell(SDL_Point { currentCell.x, currentCell.y - 1 },
-            previousCell)) {
+    if (EqualCell(
+            SDL_Point { currentCell.x, currentCell.y - 1 }, previousCell)) {
         up = true;
     }
-    if (equalCell(SDL_Point { currentCell.x, currentCell.y - 1 },
-            nextCell)) {
+    if (EqualCell(SDL_Point { currentCell.x, currentCell.y - 1 }, nextCell)) {
         up = true;
     }
     bool right = false;
-    if (equalCell(SDL_Point { currentCell.x + 1, currentCell.y },
-            previousCell)) {
+    if (EqualCell(
+            SDL_Point { currentCell.x + 1, currentCell.y }, previousCell)) {
         right = true;
     }
-    if (equalCell(SDL_Point { currentCell.x + 1, currentCell.y },
-            nextCell)) {
+    if (EqualCell(SDL_Point { currentCell.x + 1, currentCell.y }, nextCell)) {
         right = true;
     }
     bool down = false;
-    if (equalCell(SDL_Point { currentCell.x, currentCell.y + 1 },
-            previousCell)) {
+    if (EqualCell(
+            SDL_Point { currentCell.x, currentCell.y + 1 }, previousCell)) {
         down = true;
     }
-    if (equalCell(SDL_Point { currentCell.x, currentCell.y + 1 },
-            nextCell)) {
+    if (EqualCell(SDL_Point { currentCell.x, currentCell.y + 1 }, nextCell)) {
         down = true;
     }
     bool left = false;
-    if (equalCell(SDL_Point { currentCell.x - 1, currentCell.y },
-            previousCell)) {
+    if (EqualCell(
+            SDL_Point { currentCell.x - 1, currentCell.y }, previousCell)) {
         left = true;
     }
-    if (equalCell(SDL_Point { currentCell.x - 1, currentCell.y },
-            nextCell)) {
+    if (EqualCell(SDL_Point { currentCell.x - 1, currentCell.y }, nextCell)) {
         left = true;
     }
     if (up && right) {
@@ -142,8 +138,7 @@ int Renderer::turnDirection(SDL_Point const& currentCell,
 }
 
 int Renderer::bodyDirectionAndSource(SDL_Point const& currentCell,
-    SDL_Point const& previousCell, SDL_Point const& nextCell,
-    int& srcIndex)
+    SDL_Point const& previousCell, SDL_Point const& nextCell, int& srcIndex)
 {
     if (nextCell.x == previousCell.x) {
         srcIndex = Straight;
@@ -159,7 +154,8 @@ int Renderer::bodyDirectionAndSource(SDL_Point const& currentCell,
     return turnDirection(currentCell, previousCell, nextCell);
 }
 
-void Renderer::Render(Snake const& snake, SDL_Point const& food)
+void Renderer::Render(
+    Snake const& snake, SDL_Point const& food, std::vector<SDL_Point> walls)
 {
     SDL_Rect block;
     SDL_Rect src;
@@ -183,7 +179,6 @@ void Renderer::Render(Snake const& snake, SDL_Point const& food)
         sdl_renderer, sprites, &src, &block, 0, nullptr, SDL_FLIP_NONE);
 
     // Render snake's body
-    SDL_SetRenderDrawColor(sdl_renderer, 0xFF, 0xFF, 0xFF, 0xFF);
     for (auto iter = std::begin(snake.body); iter != std::end(snake.body);
          iter++) {
         block.x = iter->x * block.w;
@@ -210,12 +205,20 @@ void Renderer::Render(Snake const& snake, SDL_Point const& food)
             nullptr, SDL_FLIP_NONE);
     }
 
+    SDL_SetRenderDrawColor(sdl_renderer, 0xFA, 0xD6, 0xA5, 0xFF);
+    for (auto w : walls) {
+        block.x = w.x * block.w;
+        block.y = w.y * block.h;
+
+        SDL_RenderFillRect(sdl_renderer, &block);
+    }
+
     // Render snake's head
     block.x = static_cast<int>(snake.head_x) * block.w;
     block.y = static_cast<int>(snake.head_y) * block.h;
     if (!snake.alive) {
         src.x = DeadHead * src.w;
-    } else if (foodIsNext(snake, food)) {
+    } else if (NextToFood(snake, food)) {
         src.x = MouthOpenHead * src.w;
     } else {
         src.x = Head * src.w;
